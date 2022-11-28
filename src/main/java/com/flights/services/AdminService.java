@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AdminService {
@@ -35,6 +37,16 @@ public class AdminService {
     }
 
     public String registration(String name, String email, Integer passport) {
+
+        Pattern regexMail = Pattern.compile("\\b[\\w.%-]+@[-.\\w]+\\.[a-z]{2,4}\\b");
+        Pattern regexName = Pattern.compile("^[a-zA-Z]*$");
+        Matcher matcherName = regexName.matcher(name);
+        Matcher matcherMail = regexMail.matcher(email);
+
+        if (!matcherMail.matches() || !matcherName.matches()) {
+            return "Incorrect personal data";
+        }
+
         Client client = Client.newBuilder()
                 .setName(name)
                 .setEmail(email)

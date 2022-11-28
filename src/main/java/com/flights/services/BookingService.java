@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class BookingService {
@@ -32,6 +34,16 @@ public class BookingService {
     }
 
     public String registrationCheck(Integer passport, Long id_flight, String name, String email) {
+
+        Pattern regexMail = Pattern.compile("\\b[\\w.%-]+@[-.\\w]+\\.[a-z]{2,4}\\b");
+        Pattern regexName = Pattern.compile("^[a-zA-Z]*$");
+        Matcher matcherName = regexName.matcher(name);
+        Matcher matcherMail = regexMail.matcher(email);
+
+        if (!matcherMail.matches() || !matcherName.matches()) {
+            return "Incorrect personal data";
+        }
+
         Optional<Client> clientOptional = clientRepository.findByPassport(passport);
         Optional<Flight> flightOptional = flightRepository.findById(id_flight);
 
