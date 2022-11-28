@@ -17,8 +17,9 @@ public class BookingController {
     }
 
     @PostMapping("/registration")
-    public @ResponseBody String registration(@RequestParam Integer passport, @RequestParam Long id_flight) {
-        return bookingService.registration(passport, id_flight);
+    public @ResponseBody String registration(@RequestParam Integer passport, @RequestParam Long id_flight,
+                                             @RequestParam String name, @RequestParam String email) {
+        return bookingService.registrationCheck(passport, id_flight, name, email);
     }
 
     @GetMapping

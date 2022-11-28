@@ -8,6 +8,7 @@ import com.flights.Main;
 import com.flights.repos.BookingRepository;
 import com.flights.repos.ClientRepository;
 import com.flights.repos.FlightRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,11 +31,7 @@ public class BookingService {
         this.flightRepository = flightRepository;
     }
 
-    /* TODO
-    Добавить ограничение на места
-     */
-
-    public String registration(Integer passport, Long id_flight) {
+    public String registrationCheck(Integer passport, Long id_flight, String name, String email) {
         Optional<Client> clientOptional = clientRepository.findByPassport(passport);
         Optional<Flight> flightOptional = flightRepository.findById(id_flight);
 
@@ -42,35 +39,21 @@ public class BookingService {
             Client client = clientOptional.get();
             Flight flight = flightOptional.get();
 
-            if (flight.getCount() == 0) {
-                return Main.GSON.toJson("All seats on this plane are occupied.");
-            } else {
-                flight.setCount(flight.getCount() - 1);
-                flightRepository.save(flight);
-            }
+            return registration(client, flight);
+        } else if (flightOptional.isPresent()){
+            Client client = Client.newBuilder()
+                    .setPassport(passport)
+                    .setEmail(email)
+                    .setName(name)
+                    .build();
 
-            Booking booking = new Booking();
-            booking.setClientId(client.getId());
-            booking.setFlightId(id_flight);
-            booking.setStatus("Вылет вовремя");
+            Flight flight = flightOptional.get();
 
-            Optional<Booking> bookingOptional = bookingRepository.findBookingByClientIdAndFlightId(client.getId(), id_flight);
-            if (bookingOptional.isEmpty()) {
-                try {
-                    bookingRepository.save(booking);
+            clientRepository.save(client);
 
-                    return Main.GSON.toJson("Booking is created. " + client.getName() +
-                            ", you have to pay your booking in order section");
-
-                } catch (Exception e) {
-                    return Main.GSON.toJson(e.getMessage());
-                }
-            }
-
-            return "You paid for the order.";
-
+            return registration(client, flight);
         } else {
-            return Main.GSON.toJson("Пользователь не зарегестрирован.");
+            return "This flight does not exist";
         }
     }
 
@@ -107,5 +90,34 @@ public class BookingService {
         } else {
             return Main.GSON.toJson("Данного заказа не существует.");
         }
+    }
+
+    private String registration(@NotNull Client client, @NotNull Flight flight) {
+        if (flight.getCount() == 0) {
+            return Main.GSON.toJson("All seats on this plane are occupied.");
+        } else {
+            flight.setCount(flight.getCount() - 1);
+            flightRepository.save(flight);
+        }
+
+        Booking booking = new Booking();
+        booking.setClientId(client.getId());
+        booking.setFlightId(flight.getId());
+        booking.setStatus("Вылет вовремя");
+
+        Optional<Booking> bookingOptional = bookingRepository.findBookingByClientIdAndFlightId(client.getId(), flight.getId());
+        if (bookingOptional.isEmpty()) {
+            try {
+                bookingRepository.save(booking);
+
+                return Main.GSON.toJson("Booking is created. " + client.getName() +
+                        ", you have to pay your booking in order section");
+
+            } catch (Exception e) {
+                return Main.GSON.toJson(e.getMessage());
+            }
+        }
+
+        return "You paid for the order.";
     }
 }
